@@ -45,4 +45,19 @@ binary_tree_t *binary_tree_uncle(binary_tree_t *node);
 binary_tree_t *binary_trees_ancestor(const binary_tree_t *first,
 					const binary_tree_t *second);
 
+
+/**
+ * struct levelorder - queue node
+ *
+ * @node: node of queue
+ * @next: pointer to next node of queue
+*/
+typedef struct levelorder
+{
+	binary_tree_t *node;
+	struct levelorder *next;
+} queue;
+
+void binary_tree_levelorder(const binary_tree_t *tree, void (*func)(int));
+
 #endif /* _BINARY_TREES_H_ */
