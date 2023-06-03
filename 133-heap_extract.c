@@ -1,67 +1,102 @@
 #include "binary_trees.h"
 /**
- * find_max - returns node with max value in tree
- * @heap_node: pointer to the root of the tree
- * Return: node with max value
+ * tree_height - returns the height of a binary tree
+ * @tree: pointer to root node of a tree
+ * Return: height of a tree, NULL on failure
  */
-heap_t *find_max(heap_t *heap_node)
+size_t tree_height(const heap_t *tree)
 {
-	heap_t *current_max, *left_subtree_max, *right_subtree_max;
+	size_t height_left = 0;
+	size_t height_right = 0;
 
-	if (!heap_node->left)
-		return (heap_node);
+	if (tree == NULL)
+		return (0);
 
-	left_subtree_max = find_max(heap_node->left);
+	if (tree->left)
+		height_left = 1 + tree_height(tree->left);
 
-	if (left_subtree_max->n > heap_node->n)
-		current_max = left_subtree_max;
-	else
-		current_max = heap_node;
+	if (tree->right)
+		height_right = 1 + tree_height(tree->right);
 
-	if (heap_node->right)
-	{
-		right_subtree_max = find_max(heap_node->right);
+	if (height_left > height_right)
+		return (height_left);
+	return (height_right);
+}
+/**
+ * tree_sum - returns height sum
+ * @tree: pointer to tree
+ * Return: height sum or NULL
+ */
+size_t tree_sum(const binary_tree_t *tree)
+{
+	size_t height_left = 0;
+	size_t height_right = 0;
 
-		if (right_subtree_max->n > current_max->n)
-			current_max = right_subtree_max;
-		else
-			current_max = heap_node;
-	}
+	if (tree == NULL)
+		return (0);
 
-	return (current_max);
+	if (tree->left)
+		height_left = 1 + tree_sum(tree->left);
+
+	if (tree->right)
+		height_right = 1 + tree_sum(tree->right);
+
+	return (height_left + height_right);
 }
 
 /**
- * recurse_extract - extracts the node with he max value
- * @heap_node: pointer to the root of the tree
+ * t_preorder - goes through a binary tree using pre-order traversal
+ * @tree: pointer to the root node of the tree to traverse
+ * @node: will be last note in traverse
+ * @height: height of tree
+ *
+ * Return: No Return
  */
-void recurse_extract(heap_t *heap_node)
+void t_preorder(heap_t *tree, heap_t **node, size_t height)
 {
-	heap_t *subtree_max, *right_subtree_max = NULL;
-
-	if (!heap_node->left)
+	if (!tree)
 		return;
 
-	subtree_max = find_max(heap_node->left);
-	if (heap_node->right)
-		right_subtree_max = find_max(heap_node->right);
+	if (!height)
+		*node = tree;
+	height--;
 
-	if (right_subtree_max && right_subtree_max->n > subtree_max->n)
-		subtree_max = right_subtree_max;
+	t_preorder(tree->left, node, height);
+	t_preorder(tree->right, node, height);
+}
 
-	heap_node->n = subtree_max->n;
+/**
+ * heapify - heapifies tree
+ * @root: pointer to tree
+ */
+void heapify(heap_t *root)
+{
+	int h_value;
+	heap_t *temp_1, *temp_2;
 
-	if (!subtree_max->left)
+	if (root == NULL)
+		return;
+	temp_1 = root;
+	while (1)
 	{
-		if (subtree_max->parent && subtree_max->parent->left == subtree_max)
-			subtree_max->parent->left = NULL;
-		if (subtree_max->parent && subtree_max->parent->right == subtree_max)
-			subtree_max->parent->right = NULL;
-
-		free(subtree_max);
+		if (temp_1->left == NULL)
+			break;
+		if (temp_1->right == NULL)
+			temp_2 = temp_1->left;
+		else
+		{
+			if (temp_1->left->n > temp_1->right->n)
+				temp_2 = temp_1->left;
+			else
+				temp_2 = temp_1->right;
+		}
+		if (temp_1->n > temp_2->n)
+			break;
+		h_value = temp_1->n;
+		temp_1->n = temp_2->n;
+		temp_2->n = h_value;
+		temp_1 = temp_2;
 	}
-	else
-		recurse_extract(subtree_max);
 }
 
 /**
@@ -72,19 +107,28 @@ void recurse_extract(heap_t *heap_node)
 int heap_extract(heap_t **root)
 {
 	int extracted_value;
+	heap_t *temp_root, *node;
 
-	if (*root == NULL)
+	if (root == NULL || *root == NULL)
 		return (0);
 
-	extracted_value = (*root)->n;
-
-	if ((*root)->left == NULL)
+	temp_root = *root;
+	extracted_value = temp_root->n;
+	if (!temp_root->left && !temp_root->right)
 	{
-		extracted_value = (*root)->n;
-		free(*root);
 		*root = NULL;
+		free(temp_root);
 		return (extracted_value);
 	}
-	recurse_extract(*root);
+	t_preorder(temp_root, &node, tree_height(temp_root));
+	temp_root->n = node->n;
+	if (node->parent->right)
+		node->parent->right = NULL;
+	else
+		node->parent->left = NULL;
+	free(node);
+	heapify(temp_root);
+	*root = temp_root;
+
 	return (extracted_value);
 }
